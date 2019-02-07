@@ -11,12 +11,15 @@ app.use(morgan('combined'));
 app.use(express.static(path.join(__dirname, '/public')));
 app.use('/css', express.static(path.join(__dirname, '/node_modules/bootstrap/dist/css')));
 app.use('/js', express.static(path.join(__dirname, '/node_modules/bootstrap/dist/js')));
-app.use('/js', express.static(path.join(__dirname, '/node_modules/jquery/dist/js')));
+app.use('/js', express.static(path.join(__dirname, '/node_modules/jquery/dist')));
 app.set('views', './src/views');
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  res.render('index', { list: ['a', 'b'], title: 'Library' });
+  res.render('index', {
+    nav: ['Books', 'Authors'],
+    title: 'Library'
+  });
 });
 
 app.listen(port, () => {
