@@ -3,6 +3,20 @@ const chalk = require('chalk');
 const debug = require('debug')('app');
 const morgan = require('morgan');
 const path = require('path');
+const sql = require('mssql');
+
+const config = {
+  user: 'library',
+  password: '',
+  server: 'wglibrary.database.windows.net',
+  database: 'WGLibrary',
+
+  options: {
+    encrypt: true
+  }
+};
+
+sql.connect(config).catch(err => debug(err));
 
 const app = express();
 const port = process.env.PORT || 3000;
