@@ -8,32 +8,36 @@ function router(nav) {
 
   bookRouter.route('/')
     .get((req, res) => {
-      const request = new sql.Request();
-      request.query('select * from books').then(result => {
-        result.recordset.forEach((r) =>{
-          books.push({
-            title: r.title,
-            id: r.id,
-            author: r.author
-          })
-        });
-        
+      async function query() {
+        const request = new sql.Request();
+        const { recordset } = await request.query('select * from books');
+
         res.render('bookListView', {
           nav,
           title: 'Library',
-          books: result.recordset
+          books: recordset
         });
-      });
+      };
+      query();
     });
 
   bookRouter.route('/:id')
     .get((req, res) => {
-      const id = parseInt(req.params.id) - 1;
-      res.render('bookView', {
-        nav,
-        title: 'Library',
-        book: books[id]
-      });
+      (async function query() {
+        const { id } = req.params;
+        const request = new sql.Request();
+        const { recordset } = await request
+          .input('id', sql.Int, id)
+          .query('select * from books where id=@id');
+
+        res.render('bookView', {
+          nav,
+          title: 'Library',
+          book: recordset[0]
+        });
+      }());
+
+
     });
   return bookRouter;
 }
