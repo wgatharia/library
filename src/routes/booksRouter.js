@@ -1,44 +1,61 @@
 const express = require('express');
-const sql = require('mssql');
-const debug = require('debug')('app:bookRouter');
+const debug = require('debug')('app:booksRouter');
+const { MongoClient, ObjectID } = require('mongodb');
+
 const bookRouter = express.Router();
+let books = [];
 
 function router(nav) {
-  const books = [];
-
   bookRouter.route('/')
     .get((req, res) => {
-      async function query() {
-        const request = new sql.Request();
-        const { recordset } = await request.query('select * from books');
+      const url = 'mongodb://localhost:27017';
+      const dbName = 'libraryApp';
 
-        res.render('bookListView', {
-          nav,
-          title: 'Library',
-          books: recordset
-        });
-      };
-      query();
+      (async function mongo() {
+        let client;
+        try {
+          client = await MongoClient.connect(url);
+          debug('Connected to database.');
+          const db = client.db(dbName);
+          books = await db.collection('books').find().toArray();
+
+          res.render('bookListView', {
+            nav,
+            title: 'Library',
+            books
+          });
+        } catch (err) {
+          debug(err.stack);
+        }
+        client.close();
+      }());
     });
 
   bookRouter.route('/:id')
-    .all((req, res, next) =>{
-      (async function query() {
-        const { id } = req.params;
-        const request = new sql.Request();
-        const { recordset } = await request
-          .input('id', sql.Int, id)
-          .query('select * from books where id=@id');
-          [req.book] = recordset;
-          next();
-      }());
-    })
     .get((req, res) => {
-      res.render('bookView', {
-        nav,
-        title: 'Library',
-        book: req.book
-      });
+      (async function query() {
+        let client;
+        const url = 'mongodb://localhost:27017';
+        const dbName = 'libraryApp';
+        const { id } = req.params;
+        try {
+          client = await MongoClient.connect(url);
+          debug('Connected to database.');
+
+          const db = client.db(dbName);
+          const col = db.collection('books');
+
+          const book = await col.findOne({ _id: ObjectID(id) });
+
+          res.render('bookView', {
+            nav,
+            title: 'Library',
+            book
+          });
+        } catch (err) {
+          debug(err.stack);
+        }
+      }());
     });
   return bookRouter;
 }
